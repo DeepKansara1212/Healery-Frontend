@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Cart & Wishlist</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ccc; border-radius: 8px; }
+        button { padding: 10px 20px; margin: 5px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .result { margin: 10px 0; padding: 10px; background: #f8f9fa; border-radius: 4px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Cart & Wishlist Test Page</h1>
+        
+        <div class="test-section">
+            <h2>Test Product</h2>
+            <p><strong>Product:</strong> Turmeric Glow Serum</p>
+            <p><strong>Price:</strong> $29.99</p>
+            <p><strong>ID:</strong> 68b57f65ef364c152c477a41</p>
+            
+            <button onclick="addToCart()">Add to Cart</button>
+            <button onclick="addToWishlist()">Add to Wishlist</button>
+            <button onclick="clearCart()">Clear Cart</button>
+            <button onclick="clearWishlist()">Clear Wishlist</button>
+        </div>
+        
+        <div class="test-section">
+            <h2>Current Cart</h2>
+            <div id="cart-display" class="result"></div>
+            <button onclick="displayCart()">Refresh Cart</button>
+        </div>
+        
+        <div class="test-section">
+            <h2>Current Wishlist</h2>
+            <div id="wishlist-display" class="result"></div>
+            <button onclick="displayWishlist()">Refresh Wishlist</button>
+        </div>
+        
+        <div class="test-section">
+            <h2>Test Results</h2>
+            <div id="test-results"></div>
+        </div>
+    </div>
+
+    <script>
+        const testProduct = {
+            id: "68b57f65ef364c152c477a41",
+            name: "Turmeric Glow Serum",
+            price: 29.99,
+            image: "https://images.unsplash.com/photo-1556228578-8c89e6adf883?w=500&h=500&fit=crop"
+        };
+
+        function addToCart() {
+            try {
+                const existingCart = JSON.parse(localStorage.getItem("cart") || "[]");
+                const cart = Array.isArray(existingCart) ? existingCart : [];
+                const existingItem = cart.find((item) => item.id === testProduct.id);
+
+                let updatedCart;
+                if (existingItem) {
+                    updatedCart = cart.map((item) => 
+                        item.id === testProduct.id ? { ...item, quantity: item.quantity + 1 } : item
+                    );
+                } else {
+                    const newItem = {
+                        id: testProduct.id,
+                        name: testProduct.name,
+                        price: testProduct.price,
+                        image: testProduct.image,
+                        quantity: 1,
+                    };
+                    updatedCart = [...cart, newItem];
+                }
+
+                localStorage.setItem("cart", JSON.stringify(updatedCart));
+                window.dispatchEvent(new Event("cartUpdated"));
+                
+                showResult("Product added to cart successfully!", "success");
+                displayCart();
+            } catch (error) {
+                showResult("Error adding to cart: " + error.message, "error");
+            }
+        }
+
+        function addToWishlist() {
+            try {
+                const existingWishlist = JSON.parse(localStorage.getItem("wishlist") || "[]");
+                const wishlist = Array.isArray(existingWishlist) ? existingWishlist : [];
+                const existingItem = wishlist.find((item) => item.id === testProduct.id);
+
+                if (!existingItem) {
+                    const newItem = {
+                        id: testProduct.id,
+                        name: testProduct.name,
+                        price: testProduct.price,
+                        image: testProduct.image,
+                    };
+                    const updatedWishlist = [...wishlist, newItem];
+                    localStorage.setItem("wishlist", JSON.stringify(updatedWishlist));
+                    window.dispatchEvent(new Event("wishlistUpdated"));
+                    
+                    showResult("Product added to wishlist successfully!", "success");
+                    displayWishlist();
+                } else {
+                    showResult("Product already in wishlist!", "error");
+                }
+            } catch (error) {
+                showResult("Error adding to wishlist: " + error.message, "error");
+            }
+        }
+
+        function clearCart() {
+            localStorage.removeItem("cart");
+            window.dispatchEvent(new Event("cartUpdated"));
+            showResult("Cart cleared!", "success");
+            displayCart();
+        }
+
+        function clearWishlist() {
+            localStorage.removeItem("wishlist");
+            window.dispatchEvent(new Event("wishlistUpdated"));
+            showResult("Wishlist cleared!", "success");
+            displayWishlist();
+        }
+
+        function displayCart() {
+            try {
+                const cart = JSON.parse(localStorage.getItem("cart") || "[]");
+                const cartDisplay = document.getElementById("cart-display");
+                
+                if (cart.length === 0) {
+                    cartDisplay.innerHTML = "Cart is empty";
+                    cartDisplay.className = "result";
+                } else {
+                    cartDisplay.innerHTML = JSON.stringify(cart, null, 2);
+                    cartDisplay.className = "result success";
+                }
+            } catch (error) {
+                document.getElementById("cart-display").innerHTML = "Error loading cart: " + error.message;
+                document.getElementById("cart-display").className = "result error";
+            }
+        }
+
+        function displayWishlist() {
+            try {
+                const wishlist = JSON.parse(localStorage.getItem("wishlist") || "[]");
+                const wishlistDisplay = document.getElementById("wishlist-display");
+                
+                if (wishlist.length === 0) {
+                    wishlistDisplay.innerHTML = "Wishlist is empty";
+                    wishlistDisplay.className = "result";
+                } else {
+                    wishlistDisplay.innerHTML = JSON.stringify(wishlist, null, 2);
+                    wishlistDisplay.className = "result success";
+                }
+            } catch (error) {
+                document.getElementById("wishlist-display").innerHTML = "Error loading wishlist: " + error.message;
+                document.getElementById("wishlist-display").className = "result error";
+            }
+        }
+
+        function showResult(message, type) {
+            const resultsDiv = document.getElementById("test-results");
+            const resultElement = document.createElement("div");
+            resultElement.className = `result ${type}`;
+            resultElement.textContent = message;
+            resultsDiv.appendChild(resultElement);
+            
+            // Remove after 5 seconds
+            setTimeout(() => {
+                resultElement.remove();
+            }, 5000);
+        }
+
+        // Initialize display
+        displayCart();
+        displayWishlist();
+    </script>
+</body>
+</html>
